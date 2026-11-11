@@ -1,0 +1,12 @@
+# Lean checks every file of the course at each push: the badge in README.md shows the result.
+name: Lean
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1

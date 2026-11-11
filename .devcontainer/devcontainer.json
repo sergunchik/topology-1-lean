@@ -1,0 +1,8 @@
+{
+  "name": "Topology 1 in Lean",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "onCreateCommand": "curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none && ~/.elan/bin/lake exe cache get && ~/.elan/bin/lake build",
+  "remoteEnv": { "PATH": "/home/vscode/.elan/bin:${containerEnv:PATH}" },
+  "hostRequirements": { "memory": "8gb" },
+  "customizations": { "vscode": { "extensions": ["leanprover.lean4"] } }
+}
