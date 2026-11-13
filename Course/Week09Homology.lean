@@ -36,21 +36,21 @@ of modules `A --d₁--> B --d₀--> C` with `d₀ ∘ d₁ = 0`.
 * For singular chains, `H₀ ≅ ℤ` on a path-connected space, through the augmentation
   (`prop:H0`, `Singular.H0_equiv_int`), by the book's route: a path from `x` to `σ`, read on
   `Δ¹`, is a singular `1`-simplex with boundary `σ - x` (`Singular.single_sub_single_mem_range`).
-* (This item describes a homework's solution; it appears here after 12 November 2026.)
-
-
+* For a finite graph, `dim (ℚ^V / im ∂)` is the number of components, `b₀ = c`
+  (`ex:graph-cycles`): the functionals that kill `im ∂` are the functions constant along
+  edges, that is, the functions on the components (`b0_eq_components`).
 * For a finite graph, `b₁ = |E| - |V| + c` (`exr-9-graph`), by rank-nullity from `b₀ = c`
   (`b1_eq_edges_sub_vertices_add_components`).
-* (This item describes a homework's solution; it appears here after 12 November 2026.)
-
-
-* (This item describes a homework's solution; it appears here after 12 November 2026.)
-
-
-* (This item describes a homework's solution; it appears here after 12 November 2026.)
-
-
-
+* For any graph, over `ℤ`, `H₀ = coker ∂` is free abelian on the components, `ℤ^c`
+  (`exr-9-graph`, `GraphZ.H0_equiv`), by the route of `prop:H0` one component at a time: a vertex
+  goes to its component, and the ends of an edge `e` differ by `∂ e`.
+* The Euler number is computed from the chain groups (`rem:euler-chain-groups`, `hw-9-9`): for a
+  bounded complex of finite-dimensional vector spaces, `∑ (-1)^p dim K p = ∑ (-1)^p dim H p`
+  (`euler_number_eq_alternating_dim`).
+* The zigzag lemma's connecting map (`hw-9-4`): for chain maps `0 → A → B → C → 0`, short exact
+  in each degree, there is exactly one linear `δ : H_{n+2}(C) → H_{n+1}(A)` with `δ [z] = [a]`
+  whenever `j b = z` and `i a = ∂ b` (`connecting_map_exists_unique`); with it,
+  `H_{n+2}(A) → H_{n+2}(B) → H_{n+2}(C) → H_{n+1}(A) → H_{n+1}(B)` is exact (`zigzag_exact`).
 
 The proofs were found by a computer program, the automated prover Aleph Prover, and Lean checks
 them like every proof here.
@@ -658,112 +658,112 @@ theorem graphBd_single {V E : Type*} [Fintype E] [DecidableEq V] [DecidableEq E]
   classical
   simp [graphBd, LinearMap.sum_apply, LinearMap.smulRight_apply, Pi.single_apply]
 
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/-- `b₀ = c` (Example 9.18, `ex:graph-cycles`). Its proof appears here after 12 November 2026, when
-the homework is due.
-
-
--/
+/-- A functional on `ℚ^V` kills `im ∂` if and only if it takes the same value at the two ends of
+every edge. -/
+theorem graphBd_annihilator_iff {V E : Type*} [Fintype V] [Fintype E] [DecidableEq V]
+    (s t : E → V) (φ : Module.Dual ℚ (V → ℚ)) :
+    φ ∈ (LinearMap.range (graphBd s t)).dualAnnihilator ↔
+      ∀ e, φ (Pi.single (s e) (1 : ℚ)) = φ (Pi.single (t e) (1 : ℚ)) := by
+  classical
+  rw [Submodule.mem_dualAnnihilator]
+  constructor
+  · intro h e
+    have he := h (graphBd s t (Pi.single e (1 : ℚ))) ⟨_, rfl⟩
+    rw [graphBd_single, map_sub] at he
+    exact (sub_eq_zero.mp he).symm
+  · intro h y hy
+    rcases hy with ⟨x, rfl⟩
+    have hcomp : φ.comp (graphBd s t) = 0 := by
+      apply (Pi.basisFun ℚ E).ext
+      intro e
+      simp only [LinearMap.comp_apply, Pi.basisFun_apply, graphBd_single,
+        map_sub, h e, sub_self, LinearMap.zero_apply]
+    have hx := congrArg (fun f : (E → ℚ) →ₗ[ℚ] ℚ => f x) hcomp
+    exact hx
+
+/-- The functions on `V` that take the same value at the two ends of every edge. -/
+def edgeConstant {V E : Type*} (s t : E → V) : Submodule ℚ (V → ℚ) where
+  carrier := {f | ∀ e, f (s e) = f (t e)}
+  zero_mem' := by intro e; rfl
+  add_mem' := by
+    intro f g hf hg e
+    change f (s e) + g (s e) = f (t e) + g (t e)
+    rw [hf e, hg e]
+  smul_mem' := by
+    intro c f hf e
+    change c • f (s e) = c • f (t e)
+    rw [hf e]
+
+/-- They are the functions on the components, so their dimension is the number of components.
+For the relation `r a b`, "an edge runs from `a` to `b`", the quotient `Quot r` is the set of
+classes of the equivalence relation that `r` generates: the components. -/
+theorem edgeConstant_finrank {V E : Type*} [Fintype V] [Fintype E] (s t : E → V) :
+    Module.finrank ℚ (edgeConstant s t) =
+      Nat.card (Quot (fun a b : V => ∃ e, s e = a ∧ t e = b)) := by
+  classical
+  let r : V → V → Prop := fun a b => ∃ e, s e = a ∧ t e = b
+  let C := Quot r
+  letI : Fintype C := Fintype.ofFinite C
+  let equiv : (C → ℚ) ≃ₗ[ℚ] edgeConstant s t :=
+    { toFun := fun f => ⟨fun v => f (Quot.mk r v), by
+        intro e
+        exact congrArg f (Quot.sound ⟨e, rfl, rfl⟩)⟩
+      invFun := fun f => Quot.lift f.val (by
+        rintro a b ⟨e, ha, hb⟩
+        subst a
+        subst b
+        exact f.property e)
+      left_inv := by
+        intro f
+        funext q
+        induction q using Quot.inductionOn
+        rfl
+      right_inv := by
+        intro f
+        apply Subtype.ext
+        rfl
+      map_add' := by intros; rfl
+      map_smul' := by intros; rfl }
+  calc
+    Module.finrank ℚ (edgeConstant s t) = Module.finrank ℚ (C → ℚ) :=
+      equiv.finrank_eq.symm
+    _ = Fintype.card C := Module.finrank_fintype_fun_eq_card ℚ
+    _ = Nat.card C := (Nat.card_eq_fintype_card).symm
+
+/-- `b₀ = c` (`ex:graph-cycles`): for a finite graph, `dim (ℚ^V / im ∂)` is the number of its
+components. The route is dual to the book's: the dual of `ℚ^V / im ∂` is the annihilator of
+`im ∂`, which consists of the functions constant along edges (`graphBd_annihilator_iff`), that is,
+the functions on the components (`edgeConstant_finrank`). The book maps `H₀` onto `ℤ^c` instead,
+and leaves injectivity to `hw-9-10`. -/
 theorem b0_eq_components {V E : Type*} [Fintype V] [Fintype E] [DecidableEq V]
     (s t : E → V) :
     Module.finrank ℚ ((V → ℚ) ⧸ LinearMap.range (graphBd s t)) =
-      Nat.card (Quot (fun a b : V => ∃ e, s e = a ∧ t e = b)) := by sorry -- the proof appears here after 12 November 2026, when the homework is due
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      Nat.card (Quot (fun a b : V => ∃ e, s e = a ∧ t e = b)) := by
+  classical
+  let W := LinearMap.range (graphBd s t)
+  let e := LinearEquiv.piRing ℚ ℚ V ℚ
+  have hm (φ : Module.Dual ℚ (V → ℚ)) :
+      φ ∈ W.dualAnnihilator ↔ e φ ∈ edgeConstant s t := by
+    change φ ∈ W.dualAnnihilator ↔ ∀ a, (e φ) (s a) = (e φ) (t a)
+    simpa only [e, LinearEquiv.piRing_apply] using graphBd_annihilator_iff s t φ
+  have hmap : W.dualAnnihilator.map e.toLinearMap = edgeConstant s t := by
+    ext f
+    constructor
+    · rintro ⟨φ, hφ, rfl⟩
+      exact (hm φ).mp hφ
+    · intro hf
+      refine ⟨e.symm f, (hm _).mpr ?_, e.apply_symm_apply f⟩
+      simpa only [e.apply_symm_apply] using hf
+  let er := e.ofSubmodules W.dualAnnihilator (edgeConstant s t) hmap
+  calc
+    Module.finrank ℚ ((V → ℚ) ⧸ W) =
+        Module.finrank ℚ (Module.Dual ℚ ((V → ℚ) ⧸ W)) := by
+      symm
+      exact Subspace.dual_finrank_eq
+    _ = Module.finrank ℚ W.dualAnnihilator :=
+      W.dualQuotEquivDualAnnihilator.finrank_eq
+    _ = Module.finrank ℚ (edgeConstant s t) := er.finrank_eq
+    _ = _ := edgeConstant_finrank s t
 
 /-! ## `b₁` of a graph (`ex:graph-cycles`, `exr-9-graph`) -/
 
@@ -891,61 +891,61 @@ noncomputable def graphBd {V E : Type*} (s t : E → V) : (E →₀ ℤ) →ₗ[
 the ends of every edge: its points are the components of the graph. -/
 def adj {V E : Type*} (s t : E → V) (a b : V) : Prop := ∃ e, s e = a ∧ t e = b
 
-/-- **A graph's `H₀ = coker ∂` is free abelian on its components** (Exercise 9.E1, `exr-9-graph`;
-Homework 9.H10, `hw-9-10`). Its proof appears here after 12 November 2026, when the homework is
-due.
-
--/
+/-- **A graph's `H₀ = coker ∂` is free abelian on its components** (`exr-9-graph`, `hw-9-10`,
+`coker ∂ ≅ ℤ^c`), by the route of `prop:H0`, one component at a time: sending each vertex to its
+component kills the boundaries, since both ends of an edge lie in one component; conversely the
+class of a vertex depends only on its component, since `t e - s e = ∂ e`; and the two maps are
+inverse. -/
 theorem H0_equiv {V E : Type*} (s t : E → V) :
     ∃ e : ((V →₀ ℤ) ⧸ LinearMap.range (graphBd s t)) ≃ₗ[ℤ] (Quot (adj s t) →₀ ℤ),
-      ∀ v, e (Submodule.Quotient.mk (Finsupp.single v 1)) = Finsupp.single (Quot.mk _ v) 1 := by sorry -- the proof appears here after 12 November 2026, when the homework is due
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      ∀ v, e (Submodule.Quotient.mk (Finsupp.single v 1)) = Finsupp.single (Quot.mk _ v) 1 := by
+  classical
+  let P := LinearMap.range (graphBd s t)
+  let f : (V →₀ ℤ) →ₗ[ℤ] (Quot (adj s t) →₀ ℤ) :=
+    Finsupp.linearCombination ℤ (fun v => Finsupp.single (Quot.mk (adj s t) v) 1)
+  have hf : f.comp (graphBd s t) = 0 := by
+    apply Finsupp.lhom_ext
+    intro e z
+    have he : Quot.mk (adj s t) (s e) = Quot.mk (adj s t) (t e) :=
+      Quot.sound ⟨e, rfl, rfl⟩
+    simp [f, graphBd, he]
+  have hker : P ≤ LinearMap.ker f := by
+    rintro y ⟨x, rfl⟩
+    change f (graphBd s t x) = 0
+    exact LinearMap.congr_fun hf x
+  let F : ((V →₀ ℤ) ⧸ P) →ₗ[ℤ] (Quot (adj s t) →₀ ℤ) := P.liftQ f hker
+  let j : Quot (adj s t) → ((V →₀ ℤ) ⧸ P) :=
+    Quot.lift (fun v => Submodule.Quotient.mk (Finsupp.single v (1 : ℤ))) (by
+      intro a b hab
+      rcases hab with ⟨e, rfl, rfl⟩
+      apply Eq.symm
+      apply (Submodule.Quotient.eq P).2
+      refine ⟨Finsupp.single e 1, ?_⟩
+      simp [graphBd])
+  let G : (Quot (adj s t) →₀ ℤ) →ₗ[ℤ] ((V →₀ ℤ) ⧸ P) :=
+    Finsupp.linearCombination ℤ j
+  have hFG : F.comp G = LinearMap.id := by
+    apply Finsupp.lhom_ext
+    intro c z
+    induction c using Quot.inductionOn with
+    | h v =>
+      simp [G, j, F, f]
+  have hGF : G.comp F = LinearMap.id := by
+    have h : G.comp f = P.mkQ := by
+      apply Finsupp.lhom_ext
+      intro v z
+      simp [G, j, f]
+      change z • P.mkQ (Finsupp.single v 1) = P.mkQ (Finsupp.single v z)
+      rw [← map_smul]
+      simp
+    apply LinearMap.ext
+    intro q
+    induction q using Submodule.Quotient.induction_on with
+    | _ x =>
+      exact LinearMap.congr_fun h x
+  refine ⟨LinearEquiv.ofLinearMap F G hFG hGF, ?_⟩
+  intro v
+  simp [F, f, LinearEquiv.ofLinearMap]
 
 end GraphZ
 
@@ -964,231 +964,231 @@ abbrev natHomology {F : Type*} [Field F] {K : ℕ → Type*} [∀ n, AddCommGrou
     [∀ n, Module F (K n)] (d : ∀ n, K (n + 1) →ₗ[F] K n) (p : ℕ) : Type _ :=
   ↥(natCycles d p) ⧸ (LinearMap.range (d p)).comap (natCycles d p).subtype
 
--- (part of a homework solution; it appears here after 12 November 2026)
+/-- If `c p = h p + b p + b (p - 1)`, with `b (-1) = 0`, the alternating sums of `c` and `h`
+up to `N` differ by `(-1)^N b N`: the terms `b p` cancel in pairs. -/
+theorem alternating_sum_telescope (c h b : ℕ → ℤ)
+    (hzero : c 0 = h 0 + b 0)
+    (hsucc : ∀ p, c (p + 1) = h (p + 1) + b (p + 1) + b p)
+    (N : ℕ) :
+    (∑ p ∈ Finset.range (N + 1), (-1 : ℤ) ^ p * c p) =
+      (∑ p ∈ Finset.range (N + 1), (-1 : ℤ) ^ p * h p) + (-1 : ℤ) ^ N * b N := by
+  induction N with
+  | zero =>
+      simpa only [Finset.sum_range_succ, Finset.sum_range_zero, pow_zero, one_mul,
+        zero_add, add_zero] using hzero
+  | succ N ih =>
+      rw [Finset.sum_range_succ _ (N + 1), ih,
+        Finset.sum_range_succ _ (N + 1), hsucc N, pow_succ]
+      ring
 
+/-- `dim H p + dim B p = dim Z p`, where `B p = im (d p) ⊆ Z p`. -/
+theorem finrank_natHomology_add_finrank_range {F : Type*} [Field F] {K : ℕ → Type*}
+    [∀ n, AddCommGroup (K n)] [∀ n, Module F (K n)] [∀ n, FiniteDimensional F (K n)]
+    (d : ∀ n, K (n + 1) →ₗ[F] K n) (hd : ∀ n, d n ∘ₗ d (n + 1) = 0)
+    (p : ℕ) :
+    Module.finrank F (natHomology d p) + Module.finrank F (LinearMap.range (d p)) =
+      Module.finrank F (natCycles d p) := by
+  have hle : LinearMap.range (d p) ≤ natCycles d p := by
+    cases p with
+    | zero => simp [natCycles]
+    | succ n =>
+      change LinearMap.range (d (n + 1)) ≤ LinearMap.ker (d n)
+      exact LinearMap.range_le_ker_iff.mpr (hd n)
+  let S := natCycles d p
+  let B := (LinearMap.range (d p)).comap S.subtype
+  have hB : Module.finrank F B = Module.finrank F (LinearMap.range (d p)) := by
+    rw [← Submodule.finrank_map_subtype_eq S B]
+    dsimp [B]
+    rw [Submodule.map_comap_subtype, inf_eq_right.mpr hle]
+  change Module.finrank F (S ⧸ B) + Module.finrank F (LinearMap.range (d p)) =
+    Module.finrank F S
+  rw [← hB]
+  exact Submodule.finrank_quotient_add_finrank B
 
+/-- **The Euler number is computed from the chain groups** (`rem:euler-chain-groups`,
+`hw-9-9`, `def:betti-euler`): for a complex of finite-dimensional vector spaces with `K p = 0`
+for `p > N`, `∑ (-1)^p dim K p = ∑ (-1)^p dim H p`.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/-- **The Euler number is computed from the chain groups** (Definition 9.15, `def:betti-euler`;
-Homework 9.H9, `hw-9-9`; Remark 9.16, `rem:euler-chain-groups`). Its proof appears here after
-12 November 2026, when the homework is due.
-
-
-
-
--/
+The route: in each degree, rank-nullity for `d (p - 1)` and the quotient `H p = Z p / B p` give
+`dim K p = b p + dim B p + dim B (p - 1)`; in the alternating sum the `dim B p` cancel in pairs,
+leaving `(-1)^N dim B N`, which is `0` because `K (N + 1) = 0`. The book's hint starts from
+`n = 1`, the two-term case of the same count. -/
 theorem euler_number_eq_alternating_dim {F : Type*} [Field F] {K : ℕ → Type*}
     [∀ n, AddCommGroup (K n)] [∀ n, Module F (K n)] [∀ n, FiniteDimensional F (K n)]
     (d : ∀ n, K (n + 1) →ₗ[F] K n) (hd : ∀ n, d n ∘ₗ d (n + 1) = 0)
     (N : ℕ) (hN : ∀ p, N < p → Subsingleton (K p)) :
     ∑ p ∈ Finset.range (N + 1), (-1 : ℤ) ^ p * (Module.finrank F (K p) : ℤ) =
-      ∑ p ∈ Finset.range (N + 1), (-1 : ℤ) ^ p * (Module.finrank F (natHomology d p) : ℤ) := by sorry -- the proof appears here after 12 November 2026, when the homework is due
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      ∑ p ∈ Finset.range (N + 1), (-1 : ℤ) ^ p * (Module.finrank F (natHomology d p) : ℤ) := by
+  classical
+  have hzero : (Module.finrank F (K 0) : ℤ) =
+      (Module.finrank F (natHomology d 0) : ℤ) +
+        (Module.finrank F (LinearMap.range (d 0)) : ℤ) := by
+    have h := finrank_natHomology_add_finrank_range d hd 0
+    change Module.finrank F (natHomology d 0) +
+      Module.finrank F (LinearMap.range (d 0)) =
+        Module.finrank F (⊤ : Submodule F (K 0)) at h
+    rw [finrank_top] at h
+    exact_mod_cast h.symm
+  have hsucc (p : ℕ) : (Module.finrank F (K (p + 1)) : ℤ) =
+      (Module.finrank F (natHomology d (p + 1)) : ℤ) +
+        (Module.finrank F (LinearMap.range (d (p + 1))) : ℤ) +
+        (Module.finrank F (LinearMap.range (d p)) : ℤ) := by
+    have h := LinearMap.finrank_range_add_finrank_ker (d p)
+    have hz := finrank_natHomology_add_finrank_range d hd (p + 1)
+    change Module.finrank F (natHomology d (p + 1)) +
+      Module.finrank F (LinearMap.range (d (p + 1))) =
+        Module.finrank F (LinearMap.ker (d p)) at hz
+    have hn : Module.finrank F (K (p + 1)) =
+        Module.finrank F (natHomology d (p + 1)) +
+        Module.finrank F (LinearMap.range (d (p + 1))) +
+        Module.finrank F (LinearMap.range (d p)) := by omega
+    exact_mod_cast hn
+  have hsum := alternating_sum_telescope
+    (fun p => (Module.finrank F (K p) : ℤ))
+    (fun p => (Module.finrank F (natHomology d p) : ℤ))
+    (fun p => (Module.finrank F (LinearMap.range (d p)) : ℤ))
+    hzero hsucc N
+  have htop : Module.finrank F (LinearMap.range (d N)) = 0 := by
+    letI : Subsingleton (K (N + 1)) := hN (N + 1) (by omega)
+    have hdN : d N = 0 := by
+      ext x
+      rw [Subsingleton.elim x 0, map_zero]
+      rfl
+    rw [hdN, LinearMap.range_zero, finrank_bot]
+  simpa only [htop, Int.natCast_zero, mul_zero, add_zero] using hsum
 
 /-! ## The zigzag lemma: the connecting map (`hw-9-4`)
 
 Chain complexes indexed by `ℤ`, with `dA n : A (n + 1) → A n`; degrees are written `n + 1 + 1`
 rather than `n + 2`, so that the types agree by definition. -/
 
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/-- **The connecting map of the zigzag lemma** (Homework 9.H4, `hw-9-4`). Its proof appears here
-after 12 November 2026, when the homework is due.
-
-
-
-
-
--/
+/-- Every cycle `z` of `C` lifts: there are `b` with `j b = z` and a cycle `a` of `A` with
+`i a = ∂ b`. Since `j (∂ b) = ∂ z = 0`, `∂ b` lies in `ker j = im i`; and `i (∂ a) = ∂ ∂ b = 0`
+with `i` injective gives `∂ a = 0`. -/
+theorem zigzag_lift_exists {R : Type*} [Ring R] {A B C : ℤ → Type*}
+    [∀ n, AddCommGroup (A n)] [∀ n, Module R (A n)]
+    [∀ n, AddCommGroup (B n)] [∀ n, Module R (B n)]
+    [∀ n, AddCommGroup (C n)] [∀ n, Module R (C n)]
+    (dA : ∀ n, A (n + 1) →ₗ[R] A n) (dB : ∀ n, B (n + 1) →ₗ[R] B n)
+    (dC : ∀ n, C (n + 1) →ₗ[R] C n)
+    (hdB : ∀ n, dB n ∘ₗ dB (n + 1) = 0)
+    (i : ∀ n, A n →ₗ[R] B n) (j : ∀ n, B n →ₗ[R] C n)
+    (hi : ∀ n, dB n ∘ₗ i (n + 1) = i n ∘ₗ dA n)
+    (hj : ∀ n, dC n ∘ₗ j (n + 1) = j n ∘ₗ dB n)
+    (hinj : ∀ n, Function.Injective (i n))
+    (hex : ∀ n, LinearMap.range (i n) = LinearMap.ker (j n))
+    (hsurj : ∀ n, Function.Surjective (j n)) (n : ℤ)
+    (z : LinearMap.ker (dC (n + 1))) :
+    ∃ (b : B (n + 1 + 1)) (a : LinearMap.ker (dA n)),
+      j (n + 1 + 1) b = z ∧ i (n + 1) a = dB (n + 1) b := by
+  rcases hsurj (n + 1 + 1) z with ⟨b, hb⟩
+  have hcycle : j (n + 1) (dB (n + 1) b) = 0 := by
+    have h := LinearMap.congr_fun (hj (n + 1)) b
+    simp only [LinearMap.comp_apply] at h
+    rw [hb] at h
+    exact h.symm.trans z.property
+  have hrange : dB (n + 1) b ∈ LinearMap.range (i (n + 1)) := by
+    rw [hex (n + 1)]
+    exact hcycle
+  rcases hrange with ⟨a0, ha0⟩
+  have hacycle : dA n a0 = 0 := by
+    apply hinj n
+    have h := LinearMap.congr_fun (hi n) a0
+    have hsq := LinearMap.congr_fun (hdB n) b
+    simp only [LinearMap.comp_apply, LinearMap.zero_apply] at h hsq
+    rw [ha0] at h
+    simpa only [map_zero] using h.symm.trans hsq
+  exact ⟨b, ⟨a0, hacycle⟩, hb, ha0⟩
+
+/-- The class `[a]` does not depend on the lift: if `j b = j b'`, then `b - b' = i c`, and
+`a - a' = ∂ c` because `i` is injective and `i (a - a') = ∂ (b - b') = i (∂ c)`. -/
+theorem zigzag_class_independent {R : Type*} [Ring R] {A B C : ℤ → Type*}
+    [∀ n, AddCommGroup (A n)] [∀ n, Module R (A n)]
+    [∀ n, AddCommGroup (B n)] [∀ n, Module R (B n)]
+    [∀ n, AddCommGroup (C n)] [∀ n, Module R (C n)]
+    (dA : ∀ n, A (n + 1) →ₗ[R] A n) (dB : ∀ n, B (n + 1) →ₗ[R] B n)
+    (i : ∀ n, A n →ₗ[R] B n) (j : ∀ n, B n →ₗ[R] C n)
+    (hi : ∀ n, dB n ∘ₗ i (n + 1) = i n ∘ₗ dA n)
+    (hinj : ∀ n, Function.Injective (i n))
+    (hex : ∀ n, LinearMap.range (i n) = LinearMap.ker (j n)) (n : ℤ)
+    (b b' : B (n + 1 + 1)) (a a' : LinearMap.ker (dA n))
+    (hb : j (n + 1 + 1) b = j (n + 1 + 1) b')
+    (ha : i (n + 1) a = dB (n + 1) b)
+    (ha' : i (n + 1) a' = dB (n + 1) b') :
+    cls (dA (n + 1)) (dA n) a = cls (dA (n + 1)) (dA n) a' := by
+  have hmem : b - b' ∈ LinearMap.range (i (n + 1 + 1)) := by
+    rw [hex]
+    change j (n + 1 + 1) (b - b') = 0
+    rw [map_sub, hb, sub_self]
+  obtain ⟨c, hc⟩ := hmem
+  have hac : (a : A (n + 1)) - (a' : A (n + 1)) = dA (n + 1) c := by
+    apply hinj (n + 1)
+    rw [map_sub, ha, ha']
+    have hcomm := LinearMap.congr_fun (hi (n + 1)) c
+    change dB (n + 1) (i (n + 1 + 1) c) = i (n + 1) (dA (n + 1) c) at hcomm
+    rw [hc, map_sub] at hcomm
+    exact hcomm
+  let p := (LinearMap.range (dA (n + 1))).comap (LinearMap.ker (dA n)).subtype
+  have hz : p.mkQ (a - a') = 0 := by
+    apply (Submodule.Quotient.mk_eq_zero p).mpr
+    change (a : A (n + 1)) - (a' : A (n + 1)) ∈ LinearMap.range (dA (n + 1))
+    exact ⟨c, hac.symm⟩
+  rw [map_sub] at hz
+  exact sub_eq_zero.mp hz
+
+/-- The rule `z ↦ [a]` is a linear map on the cycles of `C`: the sum (or a multiple) of
+lifts is a lift of the sum (or the multiple). -/
+theorem zigzag_cycle_map_exists {R : Type*} [Ring R] {A B C : ℤ → Type*}
+    [∀ n, AddCommGroup (A n)] [∀ n, Module R (A n)]
+    [∀ n, AddCommGroup (B n)] [∀ n, Module R (B n)]
+    [∀ n, AddCommGroup (C n)] [∀ n, Module R (C n)]
+    (dA : ∀ n, A (n + 1) →ₗ[R] A n) (dB : ∀ n, B (n + 1) →ₗ[R] B n)
+    (dC : ∀ n, C (n + 1) →ₗ[R] C n)
+    (hdB : ∀ n, dB n ∘ₗ dB (n + 1) = 0)
+    (i : ∀ n, A n →ₗ[R] B n) (j : ∀ n, B n →ₗ[R] C n)
+    (hi : ∀ n, dB n ∘ₗ i (n + 1) = i n ∘ₗ dA n)
+    (hj : ∀ n, dC n ∘ₗ j (n + 1) = j n ∘ₗ dB n)
+    (hinj : ∀ n, Function.Injective (i n))
+    (hex : ∀ n, LinearMap.range (i n) = LinearMap.ker (j n))
+    (hsurj : ∀ n, Function.Surjective (j n)) (n : ℤ) :
+    ∃ f : LinearMap.ker (dC (n + 1)) →ₗ[R] H (dA (n + 1)) (dA n),
+      ∀ (z : LinearMap.ker (dC (n + 1))) (b : B (n + 1 + 1)) (a : LinearMap.ker (dA n)),
+        j (n + 1 + 1) b = z → i (n + 1) a = dB (n + 1) b →
+          f z = cls (dA (n + 1)) (dA n) a := by
+  classical
+  choose b a hb ha using
+    (fun z : LinearMap.ker (dC (n + 1)) =>
+      zigzag_lift_exists dA dB dC hdB i j hi hj hinj hex hsurj n z)
+  let f0 : LinearMap.ker (dC (n + 1)) → H (dA (n + 1)) (dA n) :=
+    fun z => cls (dA (n + 1)) (dA n) (a z)
+  have hf0 : ∀ (z : LinearMap.ker (dC (n + 1)))
+      (b0 : B (n + 1 + 1)) (a0 : LinearMap.ker (dA n)),
+      j (n + 1 + 1) b0 = z → i (n + 1) a0 = dB (n + 1) b0 →
+      f0 z = cls (dA (n + 1)) (dA n) a0 := by
+    intro z b0 a0 hb0 ha0
+    exact zigzag_class_independent dA dB i j hi hinj hex n
+      (b z) b0 (a z) a0 ((hb z).trans hb0.symm) (ha z) ha0
+  refine ⟨{ toFun := f0, map_add' := ?_, map_smul' := ?_ }, ?_⟩
+  · intro x y
+    have h := hf0 (x + y) (b x + b y) (a x + a y)
+      (by simp only [map_add, hb, Submodule.coe_add])
+      (by simp only [Submodule.coe_add, map_add, ha])
+    exact h.trans (by rfl)
+  · intro r x
+    have h := hf0 (r • x) (r • b x) (r • a x)
+      (by simp only [map_smul, hb, Submodule.coe_smul])
+      (by simp only [Submodule.coe_smul, map_smul, ha])
+    exact h.trans (by rfl)
+  · exact hf0
+
+/-- **The connecting map of the zigzag lemma** (`hw-9-4`). For chain maps
+`0 → A → B → C → 0`, short exact in each degree, there is exactly one linear
+`δ : H_{n+2}(C) → H_{n+1}(A)` with `δ [z] = [a]` whenever `j b = z` and `i a = ∂ b`.
+
+The route is the usual diagram chase, which the book leaves to the homework: the rule
+`z ↦ [a]` is well defined and linear on cycles (`zigzag_cycle_map_exists`); it kills a
+boundary `z = ∂ c`, since `c = j b'` gives the lift `b = ∂ b'` with `a = 0`; so it factors
+through `H(C)`; and it is unique because every class `[z]` has a lift. -/
 theorem connecting_map_exists_unique {R : Type*} [Ring R] {A B C : ℤ → Type*}
     [∀ n, AddCommGroup (A n)] [∀ n, Module R (A n)]
     [∀ n, AddCommGroup (B n)] [∀ n, Module R (B n)]
@@ -1206,112 +1206,112 @@ theorem connecting_map_exists_unique {R : Type*} [Ring R] {A B C : ℤ → Type*
     ∃! δ : H (dC (n + 1 + 1)) (dC (n + 1)) →ₗ[R] H (dA (n + 1)) (dA n),
       ∀ (z : LinearMap.ker (dC (n + 1))) (b : B (n + 1 + 1)) (a : LinearMap.ker (dA n)),
         j (n + 1 + 1) b = z → i (n + 1) a = dB (n + 1) b →
-          δ (cls (dC (n + 1 + 1)) (dC (n + 1)) z) = cls (dA (n + 1)) (dA n) a := by sorry -- the proof appears here after 12 November 2026, when the homework is due
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+          δ (cls (dC (n + 1 + 1)) (dC (n + 1)) z) = cls (dA (n + 1)) (dA n) a := by
+  classical
+  obtain ⟨f, hf⟩ := zigzag_cycle_map_exists dA dB dC hdB i j hi hj hinj hex hsurj n
+  let p := (LinearMap.range (dC (n + 1 + 1))).comap
+    (LinearMap.ker (dC (n + 1))).subtype
+  have hp : p ≤ LinearMap.ker f := by
+    intro z hz
+    change (z : C (n + 1 + 1)) ∈ LinearMap.range (dC (n + 1 + 1)) at hz
+    obtain ⟨c, hc⟩ := hz
+    obtain ⟨b', hb'⟩ := hsurj (n + 1 + 1 + 1) c
+    have hb : j (n + 1 + 1) (dB (n + 1 + 1) b') = z := by
+      calc
+        j (n + 1 + 1) (dB (n + 1 + 1) b') =
+            dC (n + 1 + 1) (j (n + 1 + 1 + 1) b') :=
+          (LinearMap.congr_fun (hj (n + 1 + 1)) b').symm
+        _ = z := by rw [hb', hc]
+    have ha : i (n + 1) (0 : LinearMap.ker (dA n)) =
+        dB (n + 1) (dB (n + 1 + 1) b') := by
+      simpa only [ZeroMemClass.coe_zero, map_zero, LinearMap.comp_apply,
+        LinearMap.zero_apply] using (LinearMap.congr_fun (hdB (n + 1)) b').symm
+    have hz0 := hf z (dB (n + 1 + 1) b') 0 hb ha
+    change f z = 0
+    simpa only [cls, Submodule.Quotient.mk_zero] using hz0
+  let δ := p.liftQ f hp
+  have hδ : ∀ (z : LinearMap.ker (dC (n + 1))) (b : B (n + 1 + 1))
+      (a : LinearMap.ker (dA n)), j (n + 1 + 1) b = z →
+      i (n + 1) a = dB (n + 1) b →
+      δ (cls (dC (n + 1 + 1)) (dC (n + 1)) z) =
+        cls (dA (n + 1)) (dA n) a := by
+    intro z b a hb ha
+    change f z = _
+    exact hf z b a hb ha
+  refine ⟨δ, hδ, ?_⟩
+  intro δ' hδ'
+  apply LinearMap.ext
+  intro q
+  obtain ⟨z, rfl⟩ := p.mkQ_surjective q
+  obtain ⟨b, a, hb, ha⟩ := zigzag_lift_exists dA dB dC hdB i j hi hj hinj hex hsurj n z
+  exact (hδ' z b a hb ha).trans (hδ z b a hb ha).symm
 
 /-! ## The zigzag lemma: exactness (`hw-9-4`) -/
 
--- (part of a homework solution; it appears here after 12 November 2026)
+/-- Two cycles have the same class exactly when their difference is a boundary. -/
+theorem zigzag_cls_eq_iff {R U V W : Type*} [Ring R] [AddCommGroup U] [Module R U] [AddCommGroup V] [Module R V] [AddCommGroup W] [Module R W] (d₁ : U →ₗ[R] V) (d₀ : V →ₗ[R] W) (x y : LinearMap.ker d₀) : cls d₁ d₀ x = cls d₁ d₀ y ↔ ∃ u : U, d₁ u = (x : V) - (y : V) := by
+  unfold cls
+  rw [Submodule.Quotient.eq]
+  rfl
 
+/-- Every class is the class of a cycle. -/
+theorem zigzag_cls_surjective {R U V W : Type*} [Ring R] [AddCommGroup U] [Module R U] [AddCommGroup V] [Module R V] [AddCommGroup W] [Module R W] (d₁ : U →ₗ[R] V) (d₀ : V →ₗ[R] W) : Function.Surjective (cls d₁ d₀) := by
+  unfold cls H
+  exact Submodule.Quotient.mk_surjective _
 
+/-- The lift of `zigzag_lift_exists`, stated for one square of the diagram: a cycle `z` of `C`
+is `j b`, and `∂ b = i a` for a cycle `a` of `A`. -/
+theorem zigzag_connecting_representative {R A₀ A₁ B₀ B₁ B₂ C₁ C₂ : Type*} [Ring R] [AddCommGroup A₀] [Module R A₀] [AddCommGroup A₁] [Module R A₁] [AddCommGroup B₀] [Module R B₀] [AddCommGroup B₁] [Module R B₁] [AddCommGroup B₂] [Module R B₂] [AddCommGroup C₁] [Module R C₁] [AddCommGroup C₂] [Module R C₂] (dA : A₁ →ₗ[R] A₀) (dB : B₁ →ₗ[R] B₀) (dB' : B₂ →ₗ[R] B₁) (dC : C₂ →ₗ[R] C₁) (i₀ : A₀ →ₗ[R] B₀) (i₁ : A₁ →ₗ[R] B₁) (j₁ : B₁ →ₗ[R] C₁) (j₂ : B₂ →ₗ[R] C₂) (hdB : dB ∘ₗ dB' = 0) (hi : dB ∘ₗ i₁ = i₀ ∘ₗ dA) (hj : dC ∘ₗ j₂ = j₁ ∘ₗ dB') (hinj : Function.Injective i₀) (hex : LinearMap.range i₁ = LinearMap.ker j₁) (hsurj : Function.Surjective j₂) (z : LinearMap.ker dC) : ∃ b : B₂, ∃ a : LinearMap.ker dA, j₂ b = (z : C₂) ∧ i₁ a = dB' b := by
+  obtain ⟨b, hb⟩ := hsurj (z : C₂)
+  have hcycle : j₁ (dB' b) = 0 := by
+    have h := congrArg (fun f : B₂ →ₗ[R] C₁ => f b) hj
+    simpa only [LinearMap.comp_apply, hb, LinearMap.mem_ker.mp z.property] using h.symm
+  have hrange : dB' b ∈ LinearMap.range i₁ := by
+    rw [hex]
+    exact hcycle
+  obtain ⟨a₀, ha₀⟩ := hrange
+  have ha : dA a₀ = 0 := by
+    apply hinj
+    have hcomm := congrArg (fun f : A₁ →ₗ[R] B₀ => f a₀) hi
+    have hzero := congrArg (fun f : B₂ →ₗ[R] B₀ => f b) hdB
+    simp only [LinearMap.comp_apply, ha₀] at hcomm
+    simp only [LinearMap.comp_apply, LinearMap.zero_apply] at hzero
+    simpa only [map_zero] using hcomm.symm.trans hzero
+  exact ⟨b, ⟨a₀, ha⟩, hb, ha₀⟩
 
+/-- A cycle `y` of `B` whose image `j y` is a boundary `∂ c` is `i x` up to a boundary, for a
+cycle `x` of `A`: write `c = j b`; then `j (y - ∂ b) = 0`, so `y - ∂ b = i x`, and `x` is a
+cycle because `i` is injective. -/
+theorem zigzag_cycle_preimage_mod_boundary {R A₀ A₁ B₀ B₁ B₂ C₁ C₂ : Type*} [Ring R] [AddCommGroup A₀] [Module R A₀] [AddCommGroup A₁] [Module R A₁] [AddCommGroup B₀] [Module R B₀] [AddCommGroup B₁] [Module R B₁] [AddCommGroup B₂] [Module R B₂] [AddCommGroup C₁] [Module R C₁] [AddCommGroup C₂] [Module R C₂] (dA : A₁ →ₗ[R] A₀) (dB : B₁ →ₗ[R] B₀) (dB' : B₂ →ₗ[R] B₁) (dC : C₂ →ₗ[R] C₁) (i₀ : A₀ →ₗ[R] B₀) (i₁ : A₁ →ₗ[R] B₁) (j₁ : B₁ →ₗ[R] C₁) (j₂ : B₂ →ₗ[R] C₂) (hdB : dB ∘ₗ dB' = 0) (hi : dB ∘ₗ i₁ = i₀ ∘ₗ dA) (hj : dC ∘ₗ j₂ = j₁ ∘ₗ dB') (hinj : Function.Injective i₀) (hex : LinearMap.range i₁ = LinearMap.ker j₁) (hsurj : Function.Surjective j₂) (y : LinearMap.ker dB) (hy : j₁ y ∈ LinearMap.range dC) : ∃ x : LinearMap.ker dA, ∃ b : B₂, i₁ x = (y : B₁) - dB' b := by
+  rcases hy with ⟨c, hc⟩
+  rcases hsurj c with ⟨b, hb⟩
+  have hjb := DFunLike.congr_fun hj b
+  simp only [LinearMap.comp_apply] at hjb
+  have hz : y.val - dB' b ∈ LinearMap.ker j₁ := by
+    change j₁ (y.val - dB' b) = 0
+    rw [map_sub, ← hjb, hb, hc, sub_self]
+  rw [← hex] at hz
+  rcases hz with ⟨x₀, hx₀⟩
+  have hdb := DFunLike.congr_fun hdB b
+  simp only [LinearMap.comp_apply, LinearMap.zero_apply] at hdb
+  have hix := DFunLike.congr_fun hi x₀
+  simp only [LinearMap.comp_apply] at hix
+  have hx : dA x₀ = 0 := by
+    apply hinj
+    rw [map_zero, ← hix, hx₀, map_sub, hdb, sub_zero]
+    exact y.property
+  exact ⟨⟨x₀, hx⟩, b, hx₀⟩
 
+/-- **The zigzag lemma** (`hw-9-4`). With `i_*`, `j_*` and `δ` given by their values on classes,
+`H_{n+2}(A) → H_{n+2}(B) → H_{n+2}(C) → H_{n+1}(A) → H_{n+1}(B)` is exact at its three middle
+terms.
 
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- (part of a homework solution; it appears here after 12 November 2026)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/-- **The zigzag lemma** (Homework 9.H4, `hw-9-4`). Its proof appears here after 12 November 2026,
-when the homework is due.
-
-
-
-
-
-
-
--/
+The route is the usual diagram chase, which the book leaves to the homework. The composites
+vanish: `j i = 0`; `δ [j y] = [0]`, lifting `j y` by the cycle `y`; and `i_* δ [z] = [∂ b] = 0`.
+Each kernel lies in the image: if `j_* [y] = 0`, then `[y] = [i x]`
+(`zigzag_cycle_preimage_mod_boundary`); if `δ [z] = [a] = 0`, then `a = ∂ a₂`, and `b - i a₂` is a
+cycle with image `z`; if `i_* [a] = 0`, then `i a = ∂ b`, and `z = j b` is a cycle with
+`δ [z] = [a]`. -/
 theorem zigzag_exact {R : Type*} [Ring R] {A B C : ℤ → Type*}
     [∀ n, AddCommGroup (A n)] [∀ n, Module R (A n)]
     [∀ n, AddCommGroup (B n)] [∀ n, Module R (B n)]
@@ -1343,107 +1343,107 @@ theorem zigzag_exact {R : Type*} [Ring R] {A B C : ℤ → Type*}
       (y : B (n + 1)) = i (n + 1) x →
         iₛ₁ (cls (dA (n + 1)) (dA n) x) = cls (dB (n + 1)) (dB n) y) :
     LinearMap.range iₛ₂ = LinearMap.ker jₛ₂ ∧ LinearMap.range jₛ₂ = LinearMap.ker δ ∧
-      LinearMap.range δ = LinearMap.ker iₛ₁ := by sorry -- the proof appears here after 12 November 2026, when the homework is due
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      LinearMap.range δ = LinearMap.ker iₛ₁ := by
+  classical
+  have hzA (a : LinearMap.ker (dA n)) :
+      cls (dA (n + 1)) (dA n) a = 0 ↔ ∃ t, dA (n + 1) t = (a : A (n + 1)) := by
+    simpa only [cls, Submodule.Quotient.mk_eq_zero, Submodule.mem_comap,
+      Submodule.subtype_apply, LinearMap.mem_range]
+  have hzB (m : ℤ) (a : LinearMap.ker (dB m)) :
+      cls (dB (m + 1)) (dB m) a = 0 ↔ ∃ t, dB (m + 1) t = (a : B (m + 1)) := by
+    simp only [cls, Submodule.Quotient.mk_eq_zero, Submodule.mem_comap,
+      Submodule.subtype_apply, LinearMap.mem_range]
+  have hzC (z : LinearMap.ker (dC (n + 1))) :
+      cls (dC (n + 1 + 1)) (dC (n + 1)) z = 0 ↔
+        ∃ t, dC (n + 1 + 1) t = (z : C (n + 1 + 1)) := by
+    simp only [cls, Submodule.Quotient.mk_eq_zero, Submodule.mem_comap,
+      Submodule.subtype_apply, LinearMap.mem_range]
+  have ci (m : ℤ) (x : A (m + 1)) : dB m (i (m + 1) x) = i m (dA m x) :=
+    DFunLike.congr_fun (hi m) x
+  have cj (m : ℤ) (x : B (m + 1)) : dC m (j (m + 1) x) = j m (dB m x) :=
+    DFunLike.congr_fun (hj m) x
+  have ji (m : ℤ) (x : A m) : j m (i m x) = 0 := by
+    have h : i m x ∈ LinearMap.ker (j m) := by
+      rw [← hex m]
+      exact ⟨x, rfl⟩
+    exact h
+  let ic (m : ℤ) (x : LinearMap.ker (dA m)) : LinearMap.ker (dB m) :=
+    ⟨i (m + 1) x, by rw [LinearMap.mem_ker, ci, x.property, map_zero]⟩
+  let jc (m : ℤ) (x : LinearMap.ker (dB m)) : LinearMap.ker (dC m) :=
+    ⟨j (m + 1) x, by rw [LinearMap.mem_ker, cj, x.property, map_zero]⟩
+  constructor
+  · ext x
+    simp only [LinearMap.mem_range, LinearMap.mem_ker]
+    constructor
+    · rintro ⟨a, rfl⟩
+      obtain ⟨a, rfl⟩ := zigzag_cls_surjective (dA (n + 1 + 1)) (dA (n + 1)) a
+      rw [hi₂ a (ic (n + 1) a) rfl,
+        hj₂ (ic (n + 1) a) (jc (n + 1) (ic (n + 1) a)) rfl]
+      apply (hzC _).2
+      exact ⟨0, by simpa only [jc, ic, map_zero] using (ji (n + 1 + 1) a).symm⟩
+    · intro hx
+      obtain ⟨y, rfl⟩ := zigzag_cls_surjective (dB (n + 1 + 1)) (dB (n + 1)) x
+      rw [hj₂ y (jc (n + 1) y) rfl] at hx
+      have hy : j (n + 1 + 1) y ∈ LinearMap.range (dC (n + 1 + 1)) :=
+        (hzC _).1 hx
+      obtain ⟨a, b, ha⟩ := zigzag_cycle_preimage_mod_boundary
+        (dA (n + 1)) (dB (n + 1)) (dB (n + 1 + 1)) (dC (n + 1 + 1))
+        (i (n + 1)) (i (n + 1 + 1)) (j (n + 1 + 1)) (j (n + 1 + 1 + 1))
+        (hdB (n + 1)) (hi (n + 1)) (hj (n + 1 + 1)) (hinj (n + 1))
+        (hex (n + 1 + 1)) (hsurj (n + 1 + 1 + 1)) y hy
+      refine ⟨cls _ _ a, ?_⟩
+      rw [hi₂ a (ic (n + 1) a) rfl]
+      apply (zigzag_cls_eq_iff _ _ _ _).2
+      refine ⟨-b, ?_⟩
+      change dB (n + 1 + 1) (-b) = i (n + 1 + 1) a - y
+      rw [map_neg, ha]
+      abel
+  · constructor
+    · ext x
+      simp only [LinearMap.mem_range, LinearMap.mem_ker]
+      constructor
+      · rintro ⟨y, rfl⟩
+        obtain ⟨y, rfl⟩ := zigzag_cls_surjective (dB (n + 1 + 1)) (dB (n + 1)) y
+        rw [hj₂ y (jc (n + 1) y) rfl]
+        rw [hδ (jc (n + 1) y) y 0 rfl (by
+          simpa only [Submodule.coe_zero, map_zero] using y.property.symm)]
+        rfl
+      · intro hx
+        obtain ⟨z, rfl⟩ := zigzag_cls_surjective (dC (n + 1 + 1)) (dC (n + 1)) x
+        obtain ⟨b, a, hb, ha⟩ := zigzag_connecting_representative
+          (dA n) (dB n) (dB (n + 1)) (dC (n + 1))
+          (i n) (i (n + 1)) (j (n + 1)) (j (n + 1 + 1))
+          (hdB n) (hi n) (hj (n + 1)) (hinj n) (hex (n + 1))
+          (hsurj (n + 1 + 1)) z
+        rw [hδ z b a hb ha] at hx
+        obtain ⟨a₂, ha₂⟩ := (hzA a).1 hx
+        let y : LinearMap.ker (dB (n + 1)) :=
+          ⟨b - i (n + 1 + 1) a₂, by
+            rw [LinearMap.mem_ker, map_sub, ci, ha₂, ← ha, sub_self]⟩
+        refine ⟨cls _ _ y, ?_⟩
+        apply hj₂ y z
+        change (z : C (n + 1 + 1)) = j (n + 1 + 1) (b - i (n + 1 + 1) a₂)
+        rw [map_sub, ji, sub_zero, hb]
+    · ext x
+      simp only [LinearMap.mem_range, LinearMap.mem_ker]
+      constructor
+      · rintro ⟨z, rfl⟩
+        obtain ⟨z, rfl⟩ := zigzag_cls_surjective (dC (n + 1 + 1)) (dC (n + 1)) z
+        obtain ⟨b, a, hb, ha⟩ := zigzag_connecting_representative
+          (dA n) (dB n) (dB (n + 1)) (dC (n + 1))
+          (i n) (i (n + 1)) (j (n + 1)) (j (n + 1 + 1))
+          (hdB n) (hi n) (hj (n + 1)) (hinj n) (hex (n + 1))
+          (hsurj (n + 1 + 1)) z
+        rw [hδ z b a hb ha, hi₁ a (ic n a) rfl]
+        exact (hzB n _).2 ⟨b, ha.symm⟩
+      · intro hx
+        obtain ⟨a, rfl⟩ := zigzag_cls_surjective (dA (n + 1)) (dA n) x
+        rw [hi₁ a (ic n a) rfl] at hx
+        obtain ⟨b, hb⟩ := (hzB n _).1 hx
+        let z : LinearMap.ker (dC (n + 1)) :=
+          ⟨j (n + 1 + 1) b, by
+            rw [LinearMap.mem_ker, cj, hb]
+            exact ji (n + 1) a⟩
+        exact ⟨cls _ _ z, hδ z b a rfl hb.symm⟩
 
 end Week09Homology

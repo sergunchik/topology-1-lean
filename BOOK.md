@@ -131,9 +131,9 @@ Each statement of the book that is proved here, with the Lean declarations that 
 | Lemma 9.4 | `lem:boundaries-are-cycles` | [`range_le_ker`](Course/Week09Homology.lean#L65-L73) |
 | Lemma 9.8 | `lem:chain-map-homology` | [`induced_map_exists_unique`](Course/Week09Homology.lean#L88-L133), [`functoriality`](Course/Week09Homology.lean#L135-L170) |
 | Lemma 9.13 | `lem:chain-homotopy` | [`homotopic_maps_agree`](Course/Week09Homology.lean#L174-L209) |
-| Definition 9.15 | `def:betti-euler` | [`b1_eq_edges_sub_vertices_add_one`](Course/Week09Homology.lean#L838-L861), [`b1_eq_edges_sub_vertices_add_components`](Course/Week09Homology.lean#L863-L876), [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) (proof after 12 November 2026) |
-| Remark 9.16 | `rem:euler-chain-groups` | [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) (proof after 12 November 2026) |
-| Example 9.18 | `ex:graph-cycles` | [`b0_eq_components`](Course/Week09Homology.lean#L733-L766) (proof after 12 November 2026), [`b1_eq_edges_sub_vertices_add_one`](Course/Week09Homology.lean#L838-L861) |
+| Definition 9.15 | `def:betti-euler` | [`b1_eq_edges_sub_vertices_add_one`](Course/Week09Homology.lean#L838-L861), [`b1_eq_edges_sub_vertices_add_components`](Course/Week09Homology.lean#L863-L876), [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) |
+| Remark 9.16 | `rem:euler-chain-groups` | [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) |
+| Example 9.18 | `ex:graph-cycles` | [`b0_eq_components`](Course/Week09Homology.lean#L733-L766), [`b1_eq_edges_sub_vertices_add_one`](Course/Week09Homology.lean#L838-L861) |
 | Definition 9.20 | `def:standard-simplex` | [`Singular.Simplex`](Course/Week09Homology.lean#L298-L299) |
 | Lemma 9.21 | `lem:face-identity` | [`delete_comm`](Course/Week09Homology.lean#L268-L275), [`Singular.face_comp`](Course/Week09Homology.lean#L325-L349) |
 | Definition 9.23 | `def:boundary` | [`Singular.bd`](Course/Week09Homology.lean#L313-L318) |
@@ -141,11 +141,11 @@ Each statement of the book that is proved here, with the Lean declarations that 
 | Proposition 9.26 | `prop:H0` | [`H0_equiv_int`](Course/Week09Homology.lean#L500-L521), [`Singular.H0_equiv_int`](Course/Week09Homology.lean#L611-L641) |
 | Proposition 9.29 | `prop:homology-point` | [`point_acyclic`](Course/Week09Homology.lean#L441-L445), [`point_H0`](Course/Week09Homology.lean#L523-L527) |
 | Proposition 9.30 | `prop:cone-construction` | [`acyclic`](Course/Week09Homology.lean#L426-L439) |
-| Exercise 9.E1 | `exr-9-graph` | [`b1_eq_edges_sub_vertices_add_components`](Course/Week09Homology.lean#L863-L876), [`GraphZ.H0_equiv`](Course/Week09Homology.lean#L894-L948) (proof after 12 November 2026) |
+| Exercise 9.E1 | `exr-9-graph` | [`b1_eq_edges_sub_vertices_add_components`](Course/Week09Homology.lean#L863-L876), [`GraphZ.H0_equiv`](Course/Week09Homology.lean#L894-L948) |
 | Exercise 9.E2 | `exr-9-reduced` | [`vertexSum`](Course/Week09Homology.lean#L788-L790) |
-| Homework 9.H4 | `hw-9-4` | [`connecting_map_exists_unique`](Course/Week09Homology.lean#L1184-L1247) (proof after 12 November 2026), [`zigzag_exact`](Course/Week09Homology.lean#L1305-L1447) (proof after 12 November 2026) |
-| Homework 9.H9 | `hw-9-9` | [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) (proof after 12 November 2026) |
-| Homework 9.H10 | `hw-9-10` | [`GraphZ.H0_equiv`](Course/Week09Homology.lean#L894-L948) (proof after 12 November 2026) |
+| Homework 9.H4 | `hw-9-4` | [`connecting_map_exists_unique`](Course/Week09Homology.lean#L1184-L1247), [`zigzag_exact`](Course/Week09Homology.lean#L1305-L1447) |
+| Homework 9.H9 | `hw-9-9` | [`euler_number_eq_alternating_dim`](Course/Week09Homology.lean#L1008-L1058) |
+| Homework 9.H10 | `hw-9-10` | [`GraphZ.H0_equiv`](Course/Week09Homology.lean#L894-L948) |
 | Theorem 10.16 | `thm:surface-groups` | [`Crosscap.crosscap_ab`](Course/Week10SurfaceGroups.lean#L210-L243) |
 | Corollary 10.17 | `cor:surface-abelian` | [`surface_ab`](Course/Week10SurfaceGroups.lean#L76-L95) |
 | Theorem 12.10 | `thm:deck-group` | [`deck_group`](Course/Week12Deck.lean#L170-L211) |
